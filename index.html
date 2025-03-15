@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>정보보안암호수학과 사다리게임</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #E3F2FD;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+    
+    .container {
+      max-width: 800px;
+      width: 100%;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+    }
+    
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1;
+    }
+    
+    .header h1,
+    .header p {
+      position: relative;
+      z-index: 2;
+    }
+    
+    .header-image {
+      max-width: 100%;
+      height: auto;
+      margin-bottom: 10px;
+    }
+    
+    .game-area {
+      padding: 20px;
+      background-color: #E3F2FD;
+    }
+    
+    .footer {
+      padding: 15px;
+      background-color: #f5f5f5;
+      text-align: center;
+      color: #666;
+    }
+    
+    button {
+      background: linear-gradient(to right, #1976D2, #0D47A1);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      margin: 10px auto;
+      display: block;
+      font-weight: bold;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .keywords, .prizes {
+      display: flex;
+      justify-content: space-around;
+      margin: 20px 0;
+    }
+    
+    .keyword, .prize {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.2s;
+      color: white;
+      overflow: hidden;
+      background-color: transparent;
+    }
+    
+    .keyword {
+      background-color: #1565C0;
+    }
+    
+    .keyword:hover {
+      transform: scale(1.1);
+    }
+    
+    .keyword.selected {
+      background-color: #00B0FF;
+    }
+    
+    .prize img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    
+    .prize:nth-child(1) { background-color: transparent; }
+    .prize:nth-child(2) { background-color: transparent; }
+    .prize:nth-child(3) { background-color: transparent; }
+    .prize:nth-child(4) { background-color: transparent; }
+    .prize:nth-child(5) { background-color: transparent; }
+    
+    .ladder {
+      position: relative;
+      height: 300px;
+      margin: 20px 0;
+    }
+    
+    .vertical-line {
+      position: absolute;
+      width: 3px;
+      background-color: white;
+      top: 0;
+      bottom: 0;
+    }
+    
+    .horizontal-line {
+      position: absolute;
+      height: 3px;
+      background-color: white;
+    }
+    
+    .path {
+      position: absolute;
+      background-color: #29B6F6;
+      width: 4px;
+      border-radius: 2px;
+    }
+    
+    .popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      display: none;
+    }
+    
+    .popup-content {
+      background-color: white;
+      padding: 30px;
+      border-radius: 10px;
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+    }
+    
+    .emoji {
+      font-size: 24px;
+      margin-top: 5px;
+    }
+    
+    .result-emoji {
+      font-size: 50px;
+      margin: 20px 0;
+    }
+    
+    .inventory {
+      background-color: #0D47A1;
+      color: white;
+      padding: 10px;
+      border-radius: 20px;
+      margin: 15px 0;
+      text-align: center;
+      font-size: 14px;
+    }
+    
+    .sparkle {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: radial-gradient(circle at center, white 0%, rgba(255,255,255,0) 70%);
+      box-shadow: 0 0 10px 2px rgba(255,255,255,0.8);
+      opacity: 0.7;
+    }
+    
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      opacity: 0.7;
+    }
+    
+    @keyframes drawPath {
+      to {
+        height: 100%;
+      }
+    }
+    
+    @keyframes drawPathHorizontal {
+      to {
+        width: 100%;
+      }
+    }
+    
+    @keyframes sparkle {
+      0%, 100% {
+        opacity: 0;
+        transform: scale(0.5);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1.2);
+      }
+    }
+    
+    @keyframes confetti-fall {
+      0% {
+        transform: translateY(-10px) rotate(0deg);
+        opacity: 0;
+      }
+      10% {
+        opacity: 0.7;
+      }
+      100% {
+        transform: translateY(1000px) rotate(720deg);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>정보보안암호수학과 100% 당첨 사다리게임</h1>
+      <p>전공탐색박람회 특별 이벤트</p>
+      <p style="font-size: 14px;">사다리로 당첨된 상품과 실제 상품은 다를 수 있습니다!</p>
+    </div>
+    
+    <div class="game-area">
+      <div class="keywords">
+        <div class="keyword" data-index="0">
+          <span class="emoji">💻</span>
+          <span>정보</span>
+        </div>
+        <div class="keyword" data-index="1">
+          <span class="emoji">🔒</span>
+          <span>보안</span>
+        </div>
+        <div class="keyword" data-index="2">
+          <span class="emoji">🔐</span>
+          <span>암호</span>
+        </div>
+        <div class="keyword" data-index="3">
+          <span class="emoji">📊</span>
+          <span>수학</span>
+        </div>
+        <div class="keyword" data-index="4">
+          <span class="emoji">🌐</span>
+          <span>사이버</span>
+        </div>
+      </div>
+      
+      <div class="ladder" id="ladder">
+        <!-- 세로선 및 가로선이 JavaScript로 생성됩니다 -->
+      </div>
+      
+      <div class="prizes">
+        <div class="prize">
+          <img src="images/prize1.png" alt="아이스커피">
+        </div>
+        <div class="prize">
+          <img src="images/prize2.png" alt="플레이스앤 상품권">
+        </div>
+        <div class="prize">
+          <img src="images/prize3.png" alt="지도교수와의 식사권">
+        </div>
+        <div class="prize">
+          <img src="images/prize4.png" alt="멘토와의 식사권">
+        </div>
+        <div class="prize">
+          <img src="images/prize1.png" alt="아이스커피">
+        </div>
+      </div>
+      
+      <!-- 상품 수량 표시 -->
+      <div class="inventory" id="inventory">
+        아이스커피: 100장 | 플레이스앤 상품권: 10장 | 지도교수와의 식사권: 3장 | 멘토와의 식사권: 3장
+      </div>
+      
+      <button id="reset-button">사다리 재생성</button>
+    </div>
+    
+    <div class="footer">
+      <p><strong>정보보안암호수학과</strong> | 전공탐색박람회</p>
+    </div>
+  </div>
+  
+  <div class="popup" id="result-popup">
+    <div class="popup-content" style="max-width: 90%; max-height: 90vh; overflow-y: auto;">
+      <h2 style="color: #1976D2;">축하합니다!</h2>
+      <p><span id="selected-keyword" style="font-weight: bold; color: #1976D2;"></span> 키워드에서 시작하여</p>
+      
+      <div style="background-color: #E3F2FD; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <div id="result-emoji" class="result-emoji" style="display: flex; justify-content: center; align-items: center; width: 100px; height: 100px; margin: 0 auto;">
+          <img style="max-width: 100%; height: auto; object-fit: contain;" />
+        </div>
+        <div id="result-name" style="font-size: 24px; font-weight: bold; color: #0D47A1; text-align: center; margin-top: 10px;"></div>
+      </div>
+      
+      <p style="font-size: 18px; font-weight: bold; color: #0D47A1;">에 당첨되셨습니다!</p>
+      
+      <div style="background-color: #FFF9C4; padding: 10px; border-radius: 5px; border: 1px solid #FFECB3; margin: 15px 0;">
+        <p style="font-size: 12px; color: #F57F17; margin: 0;">부스 운영자에게 이 화면을 보여주세요!</p>
+      </div>
+      
+      <button id="close-popup">닫기</button>
+    </div>
+  </div>
+  
+  <script>
+    // 게임 상태
+    let isAnimating = false;
+    let selectedKeyword = null;
+    let ladderLines = [];
+    let prizesOrder = [0, 1, 2, 3, 4]; // 0:아이스커피, 1:상품권, 2:교수님식사, 3:멘토식사, 4:아이스커피
+    
+    // 상품 재고 정보
+    const prizeInventory = [
+      { name: '아이스커피', image: 'images/prize1.png', total: 100, remaining: 100 },
+      { name: '플레이스앤 상품권', image: 'images/prize2.png', total: 10, remaining: 10 },
+      { name: '지도교수와의 식사권', image: 'images/prize3.png', total: 3, remaining: 3 },
+      { name: '멘토와의 식사권', image: 'images/prize4.png', total: 3, remaining: 3 },
+      { name: '아이스커피', image: 'images/prize1.png', total: 100, remaining: 100 }
+    ];
+    
+    // DOM 요소
+    const ladder = document.getElementById('ladder');
+    const keywords = document.querySelectorAll('.keyword');
+    const resetButton = document.getElementById('reset-button');
+    const resultPopup = document.getElementById('result-popup');
+    const closePopupButton = document.getElementById('close-popup');
+    const selectedKeywordText = document.getElementById('selected-keyword');
+    const resultEmoji = document.getElementById('result-emoji');
+    const resultName = document.getElementById('result-name');
+    const inventoryDisplay = document.getElementById('inventory');
+    
+    // 헤더 이미지 관련 요소
+    const headerImageContainer = document.getElementById('header-image-container');
+    const headerImage = document.getElementById('header-image');
+    
+    // 상수
+    const LADDER_HEIGHT = 300;
+    const NUM_KEYWORDS = 5;
+    const KEYWORD_WIDTH = 60;
+    const LADDER_PADDING = 10;
+    const LINE_WIDTH = 3;
+    const ANIMATION_DURATION = 8000; // 사다리 애니메이션 총 시간 (ms) - 더 느리게 설정
+    
+    // 초기화
+    document.addEventListener('DOMContentLoaded', () => {
+      generateLadder();
+      
+      // 헤더 이미지 설정 (URL이 있을 경우)
+      setHeaderImage();
+      
+      // 키워드 클릭 이벤트
+      keywords.forEach(keyword => {
+        keyword.addEventListener('click', () => {
+          if (isAnimating) return;
+          
+          const index = parseInt(keyword.dataset.index);
+          findPath(index);
+        });
+      });
+      
+      // 사다리 재생성 버튼
+      resetButton.addEventListener('click', generateLadder);
+      
+      // 팝업 닫기 버튼
+      closePopupButton.addEventListener('click', () => {
+        resultPopup.style.display = 'none';
+      });
+      
+      // 초기 재고 정보 표시
+      updateInventoryDisplay();
+    });
+    
+    // 헤더 이미지 설정
+    function setHeaderImage() {
+      // 이 부분을 수정하여 실제 헤더 이미지 URL을 설정할 수 있습니다
+      const headerImageUrl = ''; // 헤더 이미지 URL 입력
+      
+      if (headerImageUrl) {
+        headerImage.src = headerImageUrl;
+        headerImageContainer.style.display = 'block';
+      }
+    }
+    
+    // 재고 정보 업데이트 표시
+    function updateInventoryDisplay() {
+      const coffeeRemaining = prizeInventory[0].remaining + prizeInventory[4].remaining;
+      const coffeeTotal = prizeInventory[0].total + prizeInventory[4].total;
+      
+      inventoryDisplay.innerHTML = `
+        아이스커피: ${coffeeRemaining}/${coffeeTotal}장 | 
+        플레이스앤 상품권: ${prizeInventory[1].remaining}/${prizeInventory[1].total}장 | 
+        지도교수와의 식사권: ${prizeInventory[2].remaining}/${prizeInventory[2].total}장 | 
+        멘토와의 식사권: ${prizeInventory[3].remaining}/${prizeInventory[3].total}장
+      `;
+    }
+    
+    // 사다리 생성 함수
+    function generateLadder() {
+      // 기존 사다리 초기화
+      ladder.innerHTML = '';
+      ladderLines = [];
+      isAnimating = false;
+      selectedKeyword = null;
+      
+      // 각 키워드의 선택 상태 초기화
+      keywords.forEach(keyword => {
+        keyword.classList.remove('selected');
+      });
+      
+      // 세로선 생성
+      for (let i = 0; i < NUM_KEYWORDS; i++) {
+        const x = (ladder.offsetWidth / NUM_KEYWORDS) * i + (ladder.offsetWidth / NUM_KEYWORDS / 2);
+        const verticalLine = document.createElement('div');
+        verticalLine.className = 'vertical-line';
+        verticalLine.style.left = `${x}px`;
+        ladder.appendChild(verticalLine);
+      }
+      
+      // 가로선 생성 (랜덤)
+      const spacingY = LADDER_HEIGHT / 10;
+      
+      for (let i = 0; i < NUM_KEYWORDS - 1; i++) {
+        const numLines = Math.floor(Math.random() * 3) + 2; // 2-4개의 가로선
+        
+        for (let j = 0; j < numLines; j++) {
+          const y = spacingY + j * (LADDER_HEIGHT / numLines) + Math.random() * 20 - 10;
+          const width = ladder.offsetWidth / NUM_KEYWORDS;
+          const x = (ladder.offsetWidth / NUM_KEYWORDS) * i + (ladder.offsetWidth / NUM_KEYWORDS / 2);
+          
+          const horizontalLine = document.createElement('div');
+          horizontalLine.className = 'horizontal-line';
+          horizontalLine.style.left = `${x}px`;
+          horizontalLine.style.top = `${y}px`;
+          horizontalLine.style.width = `${width}px`;
+          
+          ladder.appendChild(horizontalLine);
+          
+          ladderLines.push({
+            x1: x,
+            x2: x + width,
+            y: y
+          });
+        }
+      }
+      
+      // 도착점 순서 섞기
+      shufflePrizes();
+    }
+    
+    // 도착점 순서 섞기
+    function shufflePrizes() {
+      prizesOrder = [0, 1, 2, 3, 4];
+      for (let i = prizesOrder.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [prizesOrder[i], prizesOrder[j]] = [prizesOrder[j], prizesOrder[i]];
+      }
+    }
+    
+    // 경로 찾기 함수
+    function findPath(keywordIndex) {
+      if (isAnimating) return;
+      
+      isAnimating = true;
+      selectedKeyword = keywordIndex;
+      
+      // 선택된 키워드 하이라이트
+      keywords.forEach((k, idx) => {
+        if (idx === keywordIndex) {
+          k.classList.add('selected');
+        } else {
+          k.classList.remove('selected');
+        }
+      });
+      
+      // 시작 위치
+      const startX = (ladder.offsetWidth / NUM_KEYWORDS) * keywordIndex + (ladder.offsetWidth / NUM_KEYWORDS / 2);
+      let currentX = startX;
+      let currentY = 0;
+      
+      // 경로 계산
+      const pathSegments = [];
+      pathSegments.push({ x: currentX, y: currentY, isVertical: true });
+      
+      // 사다리 내려가기
+      while (currentY < LADDER_HEIGHT) {
+        // 현재 위치에서 가로선 찾기
+        let foundHorizontalLine = false;
+        
+        for (const line of ladderLines) {
+          // 현재 x 위치가 가로선의 시작점이나 끝점과 일치하고, 현재 y 위치보다 아래에 있는 가장 가까운 선
+          if ((Math.abs(line.x1 - currentX) < 5 || Math.abs(line.x2 - currentX) < 5) && 
+              line.y > currentY &&
+              !foundHorizontalLine) {
+            
+            foundHorizontalLine = true;
+            
+            // 세로 이동
+            pathSegments.push({ x: currentX, y: line.y, isVertical: true });
+            currentY = line.y;
+            
+            // 현재 위치가 가로선의 어느 쪽 끝에 있는지 확인하고 반대쪽으로 이동
+            if (Math.abs(line.x1 - currentX) < 5) {
+              // 왼쪽에서 오른쪽으로 이동
+              pathSegments.push({ x: line.x2, y: currentY, isVertical: false, direction: 'right' });
+              currentX = line.x2;
+            } else {
+              // 오른쪽에서 왼쪽으로 이동
+              pathSegments.push({ x: line.x1, y: currentY, isVertical: false, direction: 'left' });
+              currentX = line.x1;
+            }
+            
+            break;
+          }
+        }
+        
+        // 가로선을 찾지 못했다면 아래로 이동
+        if (!foundHorizontalLine) {
+          currentY += 20;
+          if (currentY >= LADDER_HEIGHT) {
+            pathSegments.push({ x: currentX, y: LADDER_HEIGHT, isVertical: true });
+            break;
+          }
+        }
+      }
+      
+      // 결과 인덱스 계산
+      const columnIndex = Math.floor((currentX / ladder.offsetWidth) * NUM_KEYWORDS);
+      const finalPrizeIndex = prizesOrder[columnIndex];
+      
+      // 상품 재고 확인 및 업데이트
+      if (prizeInventory[finalPrizeIndex].remaining > 0) {
+        prizeInventory[finalPrizeIndex].remaining -= 1;
+        updateInventoryDisplay();
+        
+        // 재고가 0이 되면 사다리 재생성
+        if (prizeInventory[finalPrizeIndex].remaining === 0) {
+          setTimeout(() => {
+            generateLadder();
+          }, ANIMATION_DURATION + 1000);
+        }
+      }
+      
+      // 경로 애니메이션 그리기
+      animatePath(pathSegments, prizesOrder[columnIndex]);
+    }
+    
+    // 경로 애니메이션 함수
+    function animatePath(segments, finalPrize) {
+      // 각 세그먼트에 대해 애니메이션 생성
+      let totalSegments = segments.length - 1;
+      let segmentDuration = ANIMATION_DURATION / totalSegments;
+      
+      for (let i = 0; i < segments.length - 1; i++) {
+        const current = segments[i];
+        const next = segments[i + 1];
+        
+        const path = document.createElement('div');
+        path.className = 'path';
+        
+        // 세로 선분
+        if (next.isVertical) {
+          path.style.left = `${current.x}px`;
+          path.style.top = `${current.y}px`;
+          path.style.height = `0`;
+          path.style.width = '4px';
+          
+          const finalHeight = next.y - current.y;
+          
+          // 세로 선 애니메이션 적용 - 타이밍 조정해서 천천히
+          setTimeout(() => {
+            path.style.transition = `height ${segmentDuration}ms ease-in-out`;
+            path.style.height = `${finalHeight}px`;
+          }, i * segmentDuration);
+        } 
+        // 가로 선분
+        else {
+          const startX = Math.min(current.x, next.x);
+          const width = Math.abs(next.x - current.x);
+          
+          path.style.left = `${startX}px`;
+          path.style.top = `${current.y - 2}px`; // 가로선의 높이를 조정
+          path.style.height = '4px';
+          path.style.width = `0`;
+          
+          // 가로 선 애니메이션 적용 - 타이밍 조정해서 천천히
+          setTimeout(() => {
+            path.style.transition = `width ${segmentDuration}ms ease-in-out`;
+            path.style.width = `${width}px`;
+          }, i * segmentDuration);
+        }
+        
+        ladder.appendChild(path);
+      }
+      
+      // 전체 애니메이션 시간 후에 결과 표시
+      setTimeout(() => {
+        showResult(finalPrize);
+      }, ANIMATION_DURATION + 500); // 애니메이션 종료 후 약간의 지연 시간 추가
+    }
+    
+    // 결과 표시 함수
+    function showResult(prizeIndex) {
+      // 선택된 키워드 텍스트 설정
+      selectedKeywordText.textContent = document.querySelector(`.keyword[data-index="${selectedKeyword}"]`).querySelector('span:not(.emoji)').textContent;
+      
+      // 결과 이미지와 이름 설정
+      const prize = prizeInventory[prizeIndex];
+      resultEmoji.innerHTML = `<img src="${prize.image}" alt="${prize.name}" style="width: 100px; height: 100px; object-fit: contain; border-radius: 50%;">`;
+      resultName.textContent = prize.name;
+      
+      // 폭죽 효과 생성
+      createFireworks();
+      
+      // 결과 팝업 표시
+      resultPopup.style.display = 'flex';
+      
+      // 애니메이션 상태 리셋 (2초 후)
+      setTimeout(() => {
+        isAnimating = false;
+      }, 2000);
+    }
+    
+    // 폭죽 효과 생성
+    function createFireworks() {
+      const popupContent = document.querySelector('.popup-content');
+      
+      // 반짝이는 빛 효과
+      for (let i = 0; i < 15; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'sparkle';
+        sparkle.style.top = `${Math.random() * 100}%`;
+        sparkle.style.left = `${Math.random() * 100}%`;
+        sparkle.style.animation = `sparkle ${Math.random() * 3 + 2}s ease-in-out infinite`;
+        resultPopup.appendChild(sparkle);
+      }
+      
+      // 컨페티
+      const colors = [
+        'rgba(25, 118, 210, 0.8)',   // 파란색
+        'rgba(13, 71, 161, 0.8)',    // 진한 파란색
+        'rgba(0, 176, 255, 0.8)',    // 밝은 파란색
+        'rgba(41, 182, 246, 0.8)',   // 하늘색
+        'rgba(79, 195, 247, 0.8)'    // 연한 하늘색
+      ];
+      
+      for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.top = `${Math.random() * 100}%`;
+        confetti.style.left = `${Math.random() * 100}%`;
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.animation = `confetti-fall ${Math.random() * 5 + 5}s ease-in-out forwards`;
+        resultPopup.appendChild(confetti);
+      }
+    }
+  </script>
+</body>
+</html>
