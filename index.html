@@ -587,7 +587,6 @@
     
     // 경로 애니메이션 함수
     function animatePath(segments, finalPrize) {
-      // 각 세그먼트에 대해 애니메이션 생성
       let totalSegments = segments.length - 1;
       let segmentDuration = ANIMATION_DURATION / totalSegments;
       
@@ -598,35 +597,35 @@
         const path = document.createElement('div');
         path.className = 'path';
         
-        // 세로 선분
         if (next.isVertical) {
+          // 세로선 애니메이션 (변경 없음)
           path.style.left = `${current.x}px`;
           path.style.top = `${current.y}px`;
-          path.style.height = `0`;
+          path.style.height = '0';
           path.style.width = '4px';
           
           const finalHeight = next.y - current.y;
           
-          // 세로 선 애니메이션 적용 - 타이밍 조정해서 천천히
           setTimeout(() => {
             path.style.transition = `height ${segmentDuration}ms ease-in-out`;
             path.style.height = `${finalHeight}px`;
           }, i * segmentDuration);
-        } 
-        // 가로 선분
-        else {
-          const startX = Math.min(current.x, next.x);
+        } else {
+          // 가로선 애니메이션 - 방향 결정
+          const isMovingRight = current.x < next.x;
+          const startX = isMovingRight ? current.x : next.x;
           const width = Math.abs(next.x - current.x);
           
           path.style.left = `${startX}px`;
-          path.style.top = `${current.y - 2}px`; // 가로선의 높이를 조정
+          path.style.top = `${current.y - 2}px`;
           path.style.height = '4px';
-          path.style.width = `0`;
+          path.style.width = '0';
           
-          // 가로 선 애니메이션 적용 - 타이밍 조정해서 천천히
           setTimeout(() => {
             path.style.transition = `width ${segmentDuration}ms ease-in-out`;
             path.style.width = `${width}px`;
+            // 애니메이션 방향 설정
+            path.style.transformOrigin = isMovingRight ? 'left' : 'right';
           }, i * segmentDuration);
         }
         
